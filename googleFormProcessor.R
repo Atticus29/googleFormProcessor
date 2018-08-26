@@ -9,15 +9,22 @@
 ################
 
 require(data.table)
+require(stringr)
 baseDir = "/Users/mf/Google\ Drive/PCC_BI112_Summer_2018/Quizzes/"
 fileName = "quiz7.csv"
 revisedFileName = sub('\\.csv','', fileName)
 data = read.csv(file = paste0(baseDir, fileName), header=T, sep=",", stringsAsFactors = FALSE)
 
+########################################
+##Extract Point Vals For Each Question##
+########################################
+
+pointVals = extractPointVals("^.*(\\d+)\\.pt\\.", colnames(data)) #\\d+\\.pt.
+
 ######################################
 ##Convert Email Addresses Into Names##
 ######################################
-
+pointVals = extractPointVals("^.*(\\d+)\\.pt\\.", colnames(data)) #\\d+\\.pt.
 emailRemoved = sub('@.*', '', data$Email.Address)
 nameSplitList = strsplit(emailRemoved, "\\.")
 first = unlist(lapply(nameSplitList, function(l) l[[1]])) #TODO make robust to missing or additional names
@@ -49,3 +56,13 @@ for(i in c(1:ncol(questionContainingDf))){
 ############################################
 
 write.table(finalDf,file = paste0(baseDir, revisedFileName,"_processed.csv"), quote=FALSE, sep=",", col.names = TRUE, row.names = FALSE)
+
+#############
+##Functions##
+#############
+
+extractPointVals= function(regexp, colnames){
+  return(str_match(colnames, regexp)[,2])
+  #results = regexpr(regexp, colnames) #, value=TRUE
+  #return (regmatches(colnames, results))
+}
