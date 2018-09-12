@@ -24,7 +24,6 @@ pointVals = extractPointVals("^.*(\\d+)\\.pt\\.", colnames(data)) #\\d+\\.pt.
 ######################################
 ##Convert Email Addresses Into Names##
 ######################################
-pointVals = extractPointVals("^.*(\\d+)\\.pt\\.", colnames(data)) #\\d+\\.pt.
 emailRemoved = sub('@.*', '', data$Email.Address)
 nameSplitList = strsplit(emailRemoved, "\\.")
 first = unlist(lapply(nameSplitList, function(l) l[[1]])) #TODO make robust to missing or additional names
@@ -51,18 +50,47 @@ for(i in c(1:ncol(questionContainingDf))){
   colnames(finalDf)[ncol(finalDf)-1] = paste0("question",i)
   colnames(finalDf)[ncol(finalDf)] = paste0("points_q",i)
 }
+
+#######################################
+##Add the points in the points_q cols##
+#######################################
+df=finalDf
+keyRowNum = which(finalDf[,1]=="key")
+searchStringForPointColNames = "points_q"
+pointsVector = pointVals
+addPointsToKeyRow(finalDf, which(finalDf[,1]=="key"), "points_q", pointVals)
+
+
 ############################################
 ##Create a csv file with the new dataframe##
 ############################################
 
-write.table(finalDf,file = paste0(baseDir, revisedFileName,"_processed.csv"), quote=FALSE, sep=",", col.names = TRUE, row.names = FALSE)
+#write.table(finalDf,file = paste0(baseDir, revisedFileName,"_processed.csv"), quote=FALSE, sep=",", col.names = TRUE, row.names = FALSE)
 
 #############
 ##Functions##
 #############
 
 extractPointVals= function(regexp, colnames){
-  return(str_match(colnames, regexp)[,2])
+  all = str_match(colnames, regexp)[,2]
+  nonNAs = all[which(!is.na(all))]
+  return(nonNAs)
   #results = regexpr(regexp, colnames) #, value=TRUE
   #return (regmatches(colnames, results))
+}
+
+addPointsToKeyRow = function(df, keyRowNum, searchStringForPointColNames, pointsVector){
+  df[] = lapply(df, as.character)
+  
+  #Find columns which has searchString in it
+  cols <- grepl(searchStringForPointColNames, colnames(df))
+  
+  #Check if the columns with searchString and length of pointsVector is the same
+  if (sum(cols) == sum(!is.na(pointsVector))) {
+    #Assign the value
+    df[keyRowNum,cols] <- pointsVector
+  }
+  #Return the updated dataframe
+  print(df)
+  return(df)
 }
